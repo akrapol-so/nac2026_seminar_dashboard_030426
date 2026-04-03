@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAC2026 — Dashboard การลงทะเบียนสัมมนา</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --hybrid: #a78bfa;
+    --online: #34d399;
+    --onsite: #60a5fa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1929 40%, #0d1f3c 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 200px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .logo-area { display: flex; align-items: center; gap: 16px; }
+  .logo-badge {
+    background: linear-gradient(135deg, var(--accent), #0099cc);
+    color: #000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .data-stamp {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 6px;
+    padding: 10px 16px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .data-stamp .label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .data-stamp .value { font-size: 13px; color: var(--accent); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+
+  /* KPI CARDS */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi {
+    background: var(--surface);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi:nth-child(1)::after { background: var(--accent); }
+  .kpi:nth-child(2)::after { background: var(--accent2); }
+  .kpi:nth-child(3)::after { background: var(--accent3); }
+  .kpi:nth-child(4)::after { background: var(--accent4); }
+  .kpi:nth-child(5)::after { background: var(--accent5); }
+  .kpi-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .kpi-value { font-size: 32px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+  .kpi:nth-child(1) .kpi-value { color: var(--accent); }
+  .kpi:nth-child(2) .kpi-value { color: var(--accent2); }
+  .kpi:nth-child(3) .kpi-value { color: var(--accent3); }
+  .kpi:nth-child(4) .kpi-value { color: var(--accent4); }
+  .kpi:nth-child(5) .kpi-value { color: var(--accent5); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* LAYOUT */
+  .main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .full-width { margin-bottom: 20px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.02);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .card-body { padding: 20px; }
+
+  /* CHART CONTAINERS */
+  .chart-wrap { position: relative; }
+  canvas { max-width: 100%; }
+
+  /* FORMAT BADGES */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .badge-onsite { background: rgba(96,165,250,0.15); color: var(--onsite); border: 1px solid rgba(96,165,250,0.3); }
+  .badge-hybrid { background: rgba(167,139,250,0.15); color: var(--hybrid); border: 1px solid rgba(167,139,250,0.3); }
+  .badge-online { background: rgba(52,211,153,0.15); color: var(--online); border: 1px solid rgba(52,211,153,0.3); }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table thead th {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 1;
+  }
+  .data-table thead th:last-child,
+  .data-table thead th:nth-child(4),
+  .data-table thead th:nth-child(5),
+  .data-table thead th:nth-child(6) { text-align: right; }
+  .data-table tbody tr {
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    transition: background 0.15s;
+  }
+  .data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .data-table tbody td { padding: 9px 12px; vertical-align: middle; }
+  .data-table tbody td:last-child,
+  .data-table tbody td:nth-child(4),
+  .data-table tbody td:nth-child(5),
+  .data-table tbody td:nth-child(6) { text-align: right; }
+  .topic-name { font-size: 11.5px; line-height: 1.4; color: var(--text); max-width: 340px; }
+  .rank-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 24px;
+  }
+  .num-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+  .num-cell.highlight { color: var(--accent); font-weight: 600; }
+
+  /* UTIL BAR */
+  .util-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .util-bar { width: 60px; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .util-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .util-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; min-width: 42px; text-align: right; }
+
+  /* TABLE SCROLL */
+  .table-scroll { max-height: 480px; overflow-y: auto; }
+  .table-scroll::-webkit-scrollbar { width: 4px; }
+  .table-scroll::-webkit-scrollbar-track { background: transparent; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* INSIGHTS */
+  .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .insight-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .insight-icon { font-size: 20px; margin-bottom: 8px; }
+  .insight-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .insight-value { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.4; }
+  .insight-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .insight-card.warn { border-color: rgba(245,158,11,0.3); }
+  .insight-card.good { border-color: rgba(16,185,129,0.3); }
+  .insight-card.info { border-color: rgba(0,212,255,0.2); }
+
+  /* UTIL FULL TABLE */
+  .util-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(30,45,69,0.4);
+  }
+  .util-row:last-child { border-bottom: none; }
+  .util-rank { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); width: 20px; flex-shrink: 0; }
+  .util-name { font-size: 11px; color: var(--text); flex: 1; line-height: 1.3; min-width: 0; }
+  .util-bar2 { width: 100px; height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .util-bar2-fill { height: 100%; border-radius: 3px; }
+  .util-pct { font-family: 'IBM Plex Mono', monospace; font-size: 11px; min-width: 46px; text-align: right; flex-shrink: 0; }
+
+  /* DAILY CHART WRAP */
+  .daily-wrap { height: 160px; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .footer span { color: var(--accent); }
+
+  @media (max-width: 1100px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .insights-grid { grid-template-columns: 1fr 1fr; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-badge">NAC2026</div>
+      <div>
+        <h1>การประชุมวิชาการประจำปี <span>สวทช.</span> ครั้งที่ 21<br>
+        <small style="font-size:14px;color:#94a3b8;font-weight:400;">the 21st NSTDA Annual Conference: NAC2026</small></h1>
+        <div class="header-meta">Dashboard การลงทะเบียนสัมมนา &nbsp;·&nbsp; ข้อมูล ณ วันที่ 3 เมษายน 2569</div>
+      </div>
+    </div>
+    <div class="data-stamp">
+      <div class="label">อัปเดตล่าสุด</div>
+      <div class="value">03 APR 2026 — 11:49</div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">ผู้ลงทะเบียน (คน)</div>
+    <div class="kpi-value">850</div>
+    <div class="kpi-sub">ผ่านระบบลงทะเบียนออนไลน์</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">ที่นั่งสำรอง (รายการ)</div>
+    <div class="kpi-value">1,471</div>
+    <div class="kpi-sub">รวมทุกหัวข้อสัมมนา</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">หัวข้อสัมมนา (ทั้งหมด)</div>
+    <div class="kpi-value">40</div>
+    <div class="kpi-sub">Onsite 33 · Hybrid 6 · Online 1</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">เฉลี่ยต่อหัวข้อ</div>
+    <div class="kpi-value">36.8</div>
+    <div class="kpi-sub">ที่นั่งสำรองเฉลี่ย (รายการ)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Onsite Util% เฉลี่ย</div>
+    <div class="kpi-value" id="avgUtil">—</div>
+    <div class="kpi-sub">เฉลี่ย Seat Utilization ห้อง Onsite</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ROW 1: Top 7 Registrations + Top 7 Util -->
+  <div class="grid-2">
+
+    <!-- CHART 1: Top 7 Registrations -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Top 7 หัวข้อลงทะเบียนสูงสุด</div>
+        <span style="font-size:10px;color:var(--muted)">จำนวนที่นั่งสำรอง (รายการ)</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap" style="height:280px">
+          <canvas id="chart1"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART 2: Top 7 Seat Utilization -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--accent4)"></span>Top 7 Seat Utilization (%)</div>
+        <span style="font-size:10px;color:var(--muted)">เฉพาะ Onsite Seat</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap" style="height:280px">
+          <canvas id="chart2"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Daily Registration + Format Donut + Insights -->
+  <div class="grid-3">
+
+    <!-- Daily Chart -->
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>แนวโน้มการลงทะเบียนรายวัน</div>
+        <span style="font-size:10px;color:var(--muted)">6 มี.ค. — 3 เม.ย. 2569 · รวม 850 คน</span>
+      </div>
+      <div class="card-body" style="padding:16px 20px;">
+        <div class="daily-wrap">
+          <canvas id="chartDaily"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Format Donut -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--hybrid)"></span>รูปแบบการจัด</div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div class="chart-wrap" style="height:160px;width:160px;">
+          <canvas id="chartDonut"></canvas>
+        </div>
+        <div style="width:100%;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span><span style="color:var(--onsite)">●</span> Onsite</span>
+            <span style="font-family:monospace;">33 หัวข้อ</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span><span style="color:var(--hybrid)">●</span> Hybrid</span>
+            <span style="font-family:monospace;">6 หัวข้อ</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+            <span><span style="color:var(--online)">●</span> Online Only</span>
+            <span style="font-family:monospace;">1 หัวข้อ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Full Detail Table -->
+  <div class="card full-width">
+    <div class="card-header">
+      <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>รายละเอียดทุกหัวข้อ — เรียงตามจำนวนลงทะเบียน (มาก→น้อย)</div>
+      <span style="font-size:10px;color:var(--muted)">40 หัวข้อ</span>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ชื่อหัวข้อ</th>
+            <th>รูปแบบ</th>
+            <th>Onsite</th>
+            <th>Online</th>
+            <th>รวม</th>
+            <th>ที่นั่ง Onsite</th>
+            <th>Util %</th>
+          </tr>
+        </thead>
+        <tbody id="mainTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROW 4: Seat Utilization Full List -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--accent4)"></span>Seat Utilization — Onsite Sessions ทั้งหมด (เรียงมาก→น้อย)</div>
+      </div>
+      <div class="card-body" style="padding:12px 20px;">
+        <div id="utilList" style="max-height:420px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>สรุปข้อมูล — มุมมองที่น่าสนใจ</div>
+      </div>
+      <div class="card-body">
+        <div class="insights-grid" id="insightsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  NAC2026 Registration Dashboard &nbsp;·&nbsp; <span>สวทช.</span> NSTDA &nbsp;·&nbsp; ข้อมูล ณ วันที่ 3 เมษายน 2569 &nbsp;·&nbsp;
+  <a href="https://www.nstda.or.th/nac/2026/" target="_blank" style="color:var(--accent);text-decoration:none;">nstda.or.th/nac/2026</a>
+</div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+const DATA = {
+  topics: [
+    {name:"การประชุมระดมสมอง Biochar Consortium ครั้งที่ 4: ห่วงโซ่คุณค่าของไบโอชาร์สำหรับการเกษตร",format:"Hybrid",onsite_reg:65,online_reg:56,total_reg:121,onsite_cap:90,util_pct:72.2},
+    {name:"เทคโนโลยีและนวัตกรรมการเพาะเลี้ยงสัตว์น้ำสู่อุตสาหกรรมคาร์บอนต่ำ",format:"Onsite",onsite_reg:78,online_reg:0,total_reg:78,onsite_cap:400,util_pct:19.5},
+    {name:"ข้าวคาร์บอนต่ำและพันธุ์ข้าวรักษ์โลกสู่อนาคตยั่งยืน",format:"Onsite",onsite_reg:69,online_reg:0,total_reg:69,onsite_cap:90,util_pct:76.7},
+    {name:"CE Design in Action: พลิกโฉมอุตสาหกรรมไทยสู่เศรษฐกิจหมุนเวียน",format:"Hybrid",onsite_reg:33,online_reg:30,total_reg:63,onsite_cap:90,util_pct:36.7},
+    {name:"ขับเคลื่อนประเทศไทยสู่เศรษฐกิจคาร์บอนต่ำ: นโยบาย การเงิน และนวัตกรรมเพื่อการเปลี่ยนผ่านอย่างยั่งยืน",format:"Onsite",onsite_reg:61,online_reg:0,total_reg:61,onsite_cap:376,util_pct:16.2},
+    {name:"การปรับตัวของเกษตรกรในการปลูกข้าวในสภาวะ Climate change",format:"Hybrid",onsite_reg:28,online_reg:31,total_reg:59,onsite_cap:90,util_pct:31.1},
+    {name:"เทคโนโลยีและนวัตกรรมโพรไบโอติกสู่การประยุกต์ใช้ในอุตสาหกรรม",format:"Onsite",onsite_reg:50,online_reg:0,total_reg:50,onsite_cap:50,util_pct:100.0},
+    {name:"จากห้องปฏิบัติการสู่การใช้งานจริง: เทคโนโลยีเอนไซม์และจุลินทรีย์เพื่อขับเคลื่อนอุตสาหกรรมชีวภาพและเศรษฐกิจคาร์บอนต่ำ",format:"Onsite",onsite_reg:48,online_reg:0,total_reg:48,onsite_cap:90,util_pct:53.3},
+    {name:"เครื่องมือดิจิทัลสู่ Net Zero: จากนโยบายสู่การจัดการคาร์บอนในสถานประกอบการ",format:"Onsite",onsite_reg:48,online_reg:0,total_reg:48,onsite_cap:150,util_pct:32.0},
+    {name:"Circular Economy as a Business Opportunity drives Economic Growth",format:"Onsite",onsite_reg:47,online_reg:0,total_reg:47,onsite_cap:376,util_pct:12.5},
+    {name:"Climate Justice & Greenwashing: From Lab to Law",format:"Onsite",onsite_reg:45,online_reg:0,total_reg:45,onsite_cap:376,util_pct:12.0},
+    {name:"The Great Shift: ปรับทิศทางจากชิ้นส่วนยานยนต์สู่เครื่องมือแพทย์",format:"Onsite",onsite_reg:43,online_reg:0,total_reg:43,onsite_cap:90,util_pct:47.8},
+    {name:"ปฏิวัติสุขภาพจากภายใน: ออกแบบสุขภาพลำไส้ด้วยเทคโนโลยีใหม่เฉพาะบุคคล",format:"Onsite",onsite_reg:43,online_reg:0,total_reg:43,onsite_cap:150,util_pct:28.7},
+    {name:"เจาะลึกนวัตกรรมสู้ภัย ASF: จากไวรัสกลายพันธุ์สู่วัคซีนต้นแบบและทางรอดใหม่ของฟาร์มสุกร",format:"Onsite",onsite_reg:42,online_reg:0,total_reg:42,onsite_cap:90,util_pct:46.7},
+    {name:"วัสดุนาโนที่เป็นมิตรต่อสิ่งแวดล้อม: นวัตกรรมจากของเสียสู่คุณค่าในเวชสำอาง ผลิตภัณฑ์เสริมอาหาร และการแพทย์อย่างยั่งยืน",format:"Onsite",onsite_reg:38,online_reg:0,total_reg:38,onsite_cap:50,util_pct:76.0},
+    {name:"CCUS และการกำจัดคาร์บอนในการปฏิบัติจริง เพื่อพาไทยสู่ Net-Zero",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:90,util_pct:41.1},
+    {name:"Net Zero: Beyond the Environment Shaping Lives and Economies",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:376,util_pct:9.8},
+    {name:"Sustainable biomass nexus: ร่วมสร้างคุณค่าจากชีวมวลอย่างยั่งยืน",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:90,util_pct:41.1},
+    {name:"การพัฒนาอุตสาหกรรมไทยด้วยนวัตกรรมสีเขียว เพื่อมุ่งสู่สังคม แห่งอนาคตที่ยั่งยืนด้วยกลไก National Postdoctoral / Postgraduate System",format:"Onsite",onsite_reg:35,online_reg:0,total_reg:35,onsite_cap:50,util_pct:70.0},
+    {name:"FlavorSERP: แพลตฟอร์มนวัตกรรมการวิจัยและพัฒนากลิ่นรสเพื่อสร้างมูลค่าให้อุตสาหกรรม",format:"Onsite",onsite_reg:35,online_reg:0,total_reg:35,onsite_cap:50,util_pct:70.0},
+    {name:"Sustainable Aviation Fuel (SAF) Transition: พลังขับเคลื่อนการเปลี่ยนผ่านสู่อุตสาหกรรมการบินยั่งยืนและการบรรลุเป้าหมาย Net Zero",format:"Onsite",onsite_reg:31,online_reg:0,total_reg:31,onsite_cap:90,util_pct:34.4},
+    {name:"[Online] การปรับตัวของเกษตรกรในการปลูกข้าวในสภาวะ Climate change",format:"Hybrid",onsite_reg:0,online_reg:31,total_reg:31,onsite_cap:0,util_pct:0},
+    {name:"Green Steel: Sustainable Engineering Material for the Next Move",format:"Onsite",onsite_reg:29,online_reg:0,total_reg:29,onsite_cap:90,util_pct:32.2},
+    {name:"การปรับตัวของเกษตรกรในการปลูกข้าวในสภาวะ Climate change (Onsite)",format:"Hybrid",onsite_reg:28,online_reg:0,total_reg:28,onsite_cap:90,util_pct:31.1},
+    {name:"โรงเรือนอัจฉริยะและโรงงานผลิตพืช ในโลกที่ถูกจำกัดด้วยสภาพภูมิอากาศ",format:"Onsite",onsite_reg:28,online_reg:0,total_reg:28,onsite_cap:150,util_pct:18.7},
+    {name:"[Online] ถอดรหัสวิกฤตไมโครพลาสติกไทย",format:"Hybrid",onsite_reg:0,online_reg:27,total_reg:27,onsite_cap:0,util_pct:0},
+    {name:"[Online] The Role of Wood and Bamboo as a Sustainable Construction Material",format:"Hybrid",onsite_reg:0,online_reg:27,total_reg:27,onsite_cap:0,util_pct:0},
+    {name:"จากนโยบายสู่การปฏิบัติ: โรงไฟฟ้าไทยกับการเปลี่ยนผ่านสู่ความเป็นกลางทางคาร์บอนที่ยั่งยืน",format:"Onsite",onsite_reg:25,online_reg:0,total_reg:25,onsite_cap:100,util_pct:25.0},
+    {name:"เทคโนโลยีวัสดุขั้นสูงเพื่ออุตสาหกรรมสีเขียวและเมืองยั่งยืน",format:"Onsite",onsite_reg:26,online_reg:0,total_reg:26,onsite_cap:90,util_pct:28.9},
+    {name:"ชี้เป้าฝุ่นแม่นยำ – ติดตามแก้ไข PM2.5 ตรงจุด",format:"Onsite",onsite_reg:20,online_reg:0,total_reg:20,onsite_cap:90,util_pct:22.2},
+    {name:"ฐานข้อมูลวัฏจักรชีวิตแห่งชาติ: โครงสร้างพื้นฐานเพื่อการเปลี่ยนผ่านสู่อุตสาหกรรมยั่งยืนและนวัตกรรมสีเขียว",format:"Onsite",onsite_reg:19,online_reg:0,total_reg:19,onsite_cap:90,util_pct:21.1},
+    {name:"[Online] Emerging Micropollutants in the Environment",format:"Online",onsite_reg:0,online_reg:19,total_reg:19,onsite_cap:0,util_pct:0},
+    {name:"Beyond the Box: The Future of Packaging Labels - พลิกดีไซน์ฉลากไทย",format:"Onsite",onsite_reg:17,online_reg:0,total_reg:17,onsite_cap:30,util_pct:56.7},
+    {name:"ถอดรหัสวิกฤตไมโครพลาสติกไทย (Onsite)",format:"Hybrid",onsite_reg:17,online_reg:0,total_reg:17,onsite_cap:50,util_pct:34.0},
+    {name:"ไผ่: เมล็ดพันธุ์แห่งการพัฒนา Nature Positive และเศรษฐกิจชุมชน",format:"Onsite",onsite_reg:17,online_reg:0,total_reg:17,onsite_cap:100,util_pct:17.0},
+    {name:"การยกระดับระบบประปาหมู่บ้านตามเป้าหมาย SDG 6",format:"Onsite",onsite_reg:16,online_reg:0,total_reg:16,onsite_cap:100,util_pct:16.0},
+    {name:"[Online] Safety Standard and interlaboratory on Nanotechnology",format:"Hybrid",onsite_reg:0,online_reg:16,total_reg:16,onsite_cap:0,util_pct:0},
+    {name:"วิศวกรรมเพื่ออนาคต: การผลิตยุคใหม่และความท้าทายด้านความยั่งยืน",format:"Onsite",onsite_reg:16,online_reg:0,total_reg:16,onsite_cap:50,util_pct:32.0},
+    {name:"บทบาทธนาคารอาหารในการขับเคลื่อนสังคมไทยอย่างยั่งยืน",format:"Onsite",onsite_reg:15,online_reg:0,total_reg:15,onsite_cap:90,util_pct:16.7},
+    {name:"บริการส่งเสริมนวัตกรรม เพื่อขับเคลื่อนการเปลี่ยนผ่านสู่โมเดลอุตสาหกรรมใหม่ ด้วย ESG",format:"Onsite",onsite_reg:12,online_reg:0,total_reg:12,onsite_cap:100,util_pct:12.0},
+    {name:"เซมิคอนดักเตอร์: พลังขับเคลื่อนการเปลี่ยนผ่านประเทศไทยสู่เศรษฐกิจสีเขียวและยั่งยืน",format:"Onsite",onsite_reg:10,online_reg:0,total_reg:10,onsite_cap:150,util_pct:6.7},
+    {name:"The Role of Wood and Bamboo as a Sustainable Construction Material (Onsite)",format:"Hybrid",onsite_reg:6,online_reg:0,total_reg:6,onsite_cap:90,util_pct:6.7},
+    {name:"ลดคาร์บอนด้วยสติ: นวัตกรรม DSM กับการขับเคลื่อนกองยานพาหนะอย่างยั่งยืน",format:"Onsite",onsite_reg:6,online_reg:0,total_reg:6,onsite_cap:50,util_pct:12.0},
+    {name:"Safety Standard and interlaboratory on Nanotechnology (Onsite)",format:"Hybrid",onsite_reg:3,online_reg:0,total_reg:3,onsite_cap:50,util_pct:6.0},
+    {name:"ความก้าวหน้าของเทคโนโลยี CCUS และบทบาทของเครือข่ายพันธมิตร",format:"Onsite",onsite_reg:33,online_reg:0,total_reg:33,onsite_cap:90,util_pct:36.7}
+  ],
+  daily: [
+    {date:"2026-03-06",count:2},{date:"2026-03-07",count:1},{date:"2026-03-09",count:21},
+    {date:"2026-03-10",count:29},{date:"2026-03-11",count:19},{date:"2026-03-12",count:11},
+    {date:"2026-03-13",count:10},{date:"2026-03-14",count:6},{date:"2026-03-15",count:1},
+    {date:"2026-03-16",count:23},{date:"2026-03-17",count:39},{date:"2026-03-18",count:41},
+    {date:"2026-03-19",count:36},{date:"2026-03-20",count:23},{date:"2026-03-21",count:5},
+    {date:"2026-03-22",count:5},{date:"2026-03-23",count:24},{date:"2026-03-24",count:20},
+    {date:"2026-03-25",count:60},{date:"2026-03-26",count:47},{date:"2026-03-27",count:68},
+    {date:"2026-03-28",count:15},{date:"2026-03-29",count:9},{date:"2026-03-30",count:72},
+    {date:"2026-03-31",count:64},{date:"2026-04-01",count:82},{date:"2026-04-02",count:90},
+    {date:"2026-04-03",count:27}
+  ]
+};
+
+// Use the real aggregated topics from python analysis
+const TOPICS = [
+  {name:"การประชุมระดมสมอง Biochar Consortium ครั้งที่ 4: ห่วงโซ่คุณค่าของไบโอชาร์สำหรับการเกษตร",format:"Hybrid",onsite_reg:65,online_reg:56,total_reg:121,onsite_cap:90,util_pct:72.2},
+  {name:"เทคโนโลยีและนวัตกรรมการเพาะเลี้ยงสัตว์น้ำสู่อุตสาหกรรมคาร์บอนต่ำ",format:"Onsite",onsite_reg:78,online_reg:0,total_reg:78,onsite_cap:400,util_pct:19.5},
+  {name:"ข้าวคาร์บอนต่ำและพันธุ์ข้าวรักษ์โลกสู่อนาคตยั่งยืน",format:"Onsite",onsite_reg:69,online_reg:0,total_reg:69,onsite_cap:90,util_pct:76.7},
+  {name:"CE Design in Action: พลิกโฉมอุตสาหกรรมไทยสู่เศรษฐกิจหมุนเวียน",format:"Hybrid",onsite_reg:33,online_reg:30,total_reg:63,onsite_cap:90,util_pct:36.7},
+  {name:"ขับเคลื่อนประเทศไทยสู่เศรษฐกิจคาร์บอนต่ำ: นโยบาย การเงิน และนวัตกรรมเพื่อการเปลี่ยนผ่านอย่างยั่งยืน",format:"Onsite",onsite_reg:61,online_reg:0,total_reg:61,onsite_cap:376,util_pct:16.2},
+  {name:"การปรับตัวของเกษตรกรในการปลูกข้าวในสภาวะ Climate change",format:"Hybrid",onsite_reg:28,online_reg:31,total_reg:59,onsite_cap:90,util_pct:31.1},
+  {name:"เทคโนโลยีและนวัตกรรมโพรไบโอติกสู่การประยุกต์ใช้ในอุตสาหกรรม",format:"Onsite",onsite_reg:50,online_reg:0,total_reg:50,onsite_cap:50,util_pct:100.0},
+  {name:"จากห้องปฏิบัติการสู่การใช้งานจริง: เทคโนโลยีเอนไซม์และจุลินทรีย์เพื่อขับเคลื่อนอุตสาหกรรมชีวภาพและเศรษฐกิจคาร์บอนต่ำ",format:"Onsite",onsite_reg:48,online_reg:0,total_reg:48,onsite_cap:90,util_pct:53.3},
+  {name:"เครื่องมือดิจิทัลสู่ Net Zero: จากนโยบายสู่การจัดการคาร์บอนในสถานประกอบการ",format:"Onsite",onsite_reg:48,online_reg:0,total_reg:48,onsite_cap:150,util_pct:32.0},
+  {name:"Circular Economy as a Business Opportunity drives Economic Growth",format:"Onsite",onsite_reg:47,online_reg:0,total_reg:47,onsite_cap:376,util_pct:12.5},
+  {name:"Climate Justice & Greenwashing: From Lab to Law",format:"Onsite",onsite_reg:45,online_reg:0,total_reg:45,onsite_cap:376,util_pct:12.0},
+  {name:"The Great Shift: ปรับทิศทางจากชิ้นส่วนยานยนต์สู่เครื่องมือแพทย์",format:"Onsite",onsite_reg:43,online_reg:0,total_reg:43,onsite_cap:90,util_pct:47.8},
+  {name:"ปฏิวัติสุขภาพจากภายใน: ออกแบบสุขภาพลำไส้ด้วยเทคโนโลยีใหม่เฉพาะบุคคล",format:"Onsite",onsite_reg:43,online_reg:0,total_reg:43,onsite_cap:150,util_pct:28.7},
+  {name:"เจาะลึกนวัตกรรมสู้ภัย ASF: จากไวรัสกลายพันธุ์สู่วัคซีนต้นแบบและทางรอดใหม่ของฟาร์มสุกร",format:"Onsite",onsite_reg:42,online_reg:0,total_reg:42,onsite_cap:90,util_pct:46.7},
+  {name:"วัสดุนาโนที่เป็นมิตรต่อสิ่งแวดล้อม: นวัตกรรมจากของเสียสู่คุณค่าในเวชสำอาง ผลิตภัณฑ์เสริมอาหาร และการแพทย์อย่างยั่งยืน",format:"Onsite",onsite_reg:38,online_reg:0,total_reg:38,onsite_cap:50,util_pct:76.0},
+  {name:"CCUS และการกำจัดคาร์บอนในการปฏิบัติจริง เพื่อพาไทยสู่ Net-Zero",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:90,util_pct:41.1},
+  {name:"Net Zero: Beyond the Environment Shaping Lives and Economies",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:376,util_pct:9.8},
+  {name:"Sustainable biomass nexus: ร่วมสร้างคุณค่าจากชีวมวลอย่างยั่งยืน",format:"Onsite",onsite_reg:37,online_reg:0,total_reg:37,onsite_cap:90,util_pct:41.1},
+  {name:"การพัฒนาอุตสาหกรรมไทยด้วยนวัตกรรมสีเขียว เพื่อมุ่งสู่สังคมแห่งอนาคตที่ยั่งยืนด้วยกลไก National Postdoctoral/Postgraduate System",format:"Onsite",onsite_reg:35,online_reg:0,total_reg:35,onsite_cap:50,util_pct:70.0},
+  {name:"FlavorSERP: แพลตฟอร์มนวัตกรรมการวิจัยและพัฒนากลิ่นรสเพื่อสร้างมูลค่าให้อุตสาหกรรม",format:"Onsite",onsite_reg:35,online_reg:0,total_reg:35,onsite_cap:50,util_pct:70.0},
+  {name:"Sustainable Aviation Fuel (SAF) Transition: พลังขับเคลื่อนสู่อุตสาหกรรมการบินยั่งยืนและการบรรลุ Net Zero",format:"Onsite",onsite_reg:31,online_reg:0,total_reg:31,onsite_cap:90,util_pct:34.4},
+  {name:"ความก้าวหน้าของเทคโนโลยี CCUS และบทบาทของเครือข่ายพันธมิตรด้านการดักจับ ใช้ประโยชน์ และกักเก็บคาร์บอนแห่งประเทศไทย",format:"Onsite",onsite_reg:33,online_reg:0,total_reg:33,onsite_cap:90,util_pct:36.7},
+  {name:"Green Steel: Sustainable Engineering Material for the Next Move",format:"Onsite",onsite_reg:29,online_reg:0,total_reg:29,onsite_cap:90,util_pct:32.2},
+  {name:"โรงเรือนอัจฉริยะและโรงงานผลิตพืช ในโลกที่ถูกจำกัดด้วยสภาพภูมิอากาศ",format:"Onsite",onsite_reg:28,online_reg:0,total_reg:28,onsite_cap:150,util_pct:18.7},
+  {name:"จากนโยบายสู่การปฏิบัติ: โรงไฟฟ้าไทยกับการเปลี่ยนผ่านสู่ความเป็นกลางทางคาร์บอนที่ยั่งยืน",format:"Onsite",onsite_reg:25,online_reg:0,total_reg:25,onsite_cap:100,util_pct:25.0},
+  {name:"เทคโนโลยีวัสดุขั้นสูงเพื่ออุตสาหกรรมสีเขียวและเมืองยั่งยืน",format:"Onsite",onsite_reg:26,online_reg:0,total_reg:26,onsite_cap:90,util_pct:28.9},
+  {name:"ชี้เป้าฝุ่นแม่นยำ – ติดตามแก้ไข PM2.5 ตรงจุด: ยกระดับเทคโนโลยี e-Nose สู่เครือข่ายภาคสนาม",format:"Onsite",onsite_reg:20,online_reg:0,total_reg:20,onsite_cap:90,util_pct:22.2},
+  {name:"ฐานข้อมูลวัฏจักรชีวิตแห่งชาติ: โครงสร้างพื้นฐานเพื่อการเปลี่ยนผ่านสู่อุตสาหกรรมยั่งยืนและนวัตกรรมสีเขียว",format:"Onsite",onsite_reg:19,online_reg:0,total_reg:19,onsite_cap:90,util_pct:21.1},
+  {name:"Beyond the Box: The Future of Packaging Labels - พลิกดีไซน์ฉลากไทย ก้าวล้ำไปกับนวัตกรรมรักษ์โลกตัวจริง",format:"Onsite",onsite_reg:17,online_reg:0,total_reg:17,onsite_cap:30,util_pct:56.7},
+  {name:"ถอดรหัสวิกฤตไมโครพลาสติกไทย: ตรวจวัดให้ชัด จัดการให้จริง เจาะลึกสถานการณ์ ผลกระทบ สู่มาตรฐานการตรวจวัดแห่งอนาคต",format:"Hybrid",onsite_reg:17,online_reg:27,total_reg:44,onsite_cap:50,util_pct:34.0},
+  {name:"ไผ่: เมล็ดพันธุ์แห่งการพัฒนา Nature Positive และเศรษฐกิจชุมชน",format:"Onsite",onsite_reg:17,online_reg:0,total_reg:17,onsite_cap:100,util_pct:17.0},
+  {name:"การยกระดับระบบประปาหมู่บ้านตามเป้าหมาย SDG 6: เทคโนโลยีบำบัดน้ำเพื่อความยั่งยืน และการขยายผล",format:"Onsite",onsite_reg:16,online_reg:0,total_reg:16,onsite_cap:100,util_pct:16.0},
+  {name:"วิศวกรรมเพื่ออนาคต: การผลิตยุคใหม่และความท้าทายด้านความยั่งยืน",format:"Onsite",onsite_reg:16,online_reg:0,total_reg:16,onsite_cap:50,util_pct:32.0},
+  {name:"Safety Standard and interlaboratory on Nanotechnology for sustainable economy",format:"Hybrid",onsite_reg:3,online_reg:16,total_reg:19,onsite_cap:50,util_pct:6.0},
+  {name:"บทบาทธนาคารอาหารในการขับเคลื่อนสังคมไทยอย่างยั่งยืน",format:"Onsite",onsite_reg:15,online_reg:0,total_reg:15,onsite_cap:90,util_pct:16.7},
+  {name:"บริการส่งเสริมนวัตกรรม เพื่อขับเคลื่อนการเปลี่ยนผ่านสู่โมเดลอุตสาหกรรมใหม่ ด้วย ESG",format:"Onsite",onsite_reg:12,online_reg:0,total_reg:12,onsite_cap:100,util_pct:12.0},
+  {name:"เซมิคอนดักเตอร์: พลังขับเคลื่อนการเปลี่ยนผ่านประเทศไทยสู่เศรษฐกิจสีเขียวและยั่งยืน",format:"Onsite",onsite_reg:10,online_reg:0,total_reg:10,onsite_cap:150,util_pct:6.7},
+  {name:"The Role of Wood and Bamboo as a Sustainable Construction Material: Supporting Global Sustainability",format:"Hybrid",onsite_reg:6,online_reg:27,total_reg:33,onsite_cap:90,util_pct:6.7},
+  {name:"ลดคาร์บอนด้วยสติ: นวัตกรรม DSM กับการขับเคลื่อนกองยานพาหนะอย่างยั่งยืน",format:"Onsite",onsite_reg:6,online_reg:0,total_reg:6,onsite_cap:50,util_pct:12.0},
+  {name:"Emerging Micropollutants in the Environment: Landscape, Technologies, and Integrated Solutions for Sustainable Management",format:"Online",onsite_reg:0,online_reg:19,total_reg:19,onsite_cap:0,util_pct:0}
+];
+
+// Sort by total_reg desc
+TOPICS.sort((a,b)=>b.total_reg-a.total_reg);
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function truncate(str, n) { return str.length > n ? str.slice(0, n) + '…' : str; }
+function badgeHtml(fmt) {
+  if(fmt==='Hybrid') return '<span class="badge badge-hybrid">Hybrid</span>';
+  if(fmt==='Online') return '<span class="badge badge-online">Online</span>';
+  return '<span class="badge badge-onsite">Onsite</span>';
+}
+function utilColor(pct) {
+  if(pct >= 80) return '#ef4444';
+  if(pct >= 60) return '#f59e0b';
+  if(pct >= 40) return '#10b981';
+  return '#60a5fa';
+}
+
+// ============================================================
+//  AVG UTIL
+// ============================================================
+const onsiteTopics = TOPICS.filter(t=>t.onsite_cap>0);
+const avgUtil = onsiteTopics.reduce((s,t)=>s+t.util_pct,0)/onsiteTopics.length;
+document.getElementById('avgUtil').textContent = avgUtil.toFixed(1)+'%';
+
+// ============================================================
+//  CHART 1: Top 7 Registrations
+// ============================================================
+(function(){
+  const top7 = [...TOPICS].sort((a,b)=>b.total_reg-a.total_reg).slice(0,7);
+  const colors7 = top7.map(t=>t.format==='Hybrid'?'rgba(167,139,250,0.85)':t.format==='Online'?'rgba(52,211,153,0.85)':'rgba(96,165,250,0.85)');
+  new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels: top7.map(t=>truncate(t.name,35)),
+      datasets: [{
+        label:'Onsite',
+        data: top7.map(t=>t.onsite_reg),
+        backgroundColor:'rgba(96,165,250,0.8)',
+        borderRadius:4,stack:'s'
+      },{
+        label:'Online',
+        data: top7.map(t=>t.online_reg),
+        backgroundColor:'rgba(167,139,250,0.8)',
+        borderRadius:4,stack:'s'
+      }]
+    },
+    options: {
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10,padding:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw} ที่นั่ง`}}
+      },
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{color:'#cbd5e1',font:{size:10.5}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+})();
+
+// ============================================================
+//  CHART 2: Top 7 Seat Utilization
+// ============================================================
+(function(){
+  const top7 = [...TOPICS].filter(t=>t.onsite_cap>0).sort((a,b)=>b.util_pct-a.util_pct).slice(0,7);
+  const colors = top7.map(t=>{
+    const p=t.util_pct;
+    if(p>=80) return 'rgba(239,68,68,0.82)';
+    if(p>=60) return 'rgba(245,158,11,0.82)';
+    if(p>=40) return 'rgba(16,185,129,0.82)';
+    return 'rgba(96,165,250,0.82)';
+  });
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: top7.map(t=>truncate(t.name,35)),
+      datasets:[{
+        label:'Seat Utilization (%)',
+        data: top7.map(t=>t.util_pct),
+        backgroundColor:colors,
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.raw}% (${top7[ctx.dataIndex].onsite_reg}/${top7[ctx.dataIndex].onsite_cap} ที่นั่ง)`}}
+      },
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:10},callback:v=>v+'%'},max:110,grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{color:'#cbd5e1',font:{size:10.5}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+})();
+
+// ============================================================
+//  DAILY CHART
+// ============================================================
+(function(){
+  const daily = DATA.daily;
+  const labels = daily.map(d=>{
+    const [y,m,dd]=d.date.split('-');
+    return `${parseInt(dd)}/${parseInt(m)}`;
+  });
+  let cum=0; const cumData=daily.map(d=>{cum+=d.count;return cum;});
+  new Chart(document.getElementById('chartDaily'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        type:'bar',label:'รายวัน (คน)',
+        data:daily.map(d=>d.count),
+        backgroundColor:'rgba(0,212,255,0.25)',
+        borderColor:'rgba(0,212,255,0.6)',
+        borderWidth:1,borderRadius:2,yAxisID:'y'
+      },{
+        type:'line',label:'สะสม (คน)',
+        data:cumData,
+        borderColor:'#10b981',borderWidth:2,
+        pointRadius:0,pointHoverRadius:4,
+        tension:0.4,fill:false,yAxisID:'y2'
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:10}}},
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:9},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'},border:{display:false}},
+        y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false},title:{display:true,text:'คน/วัน',color:'#475569',font:{size:9}}},
+        y2:{position:'right',ticks:{color:'#64748b',font:{size:9}},grid:{display:false},border:{display:false},title:{display:true,text:'สะสม',color:'#475569',font:{size:9}}}
+      }
+    }
+  });
+})();
+
+// ============================================================
+//  DONUT CHART
+// ============================================================
+new Chart(document.getElementById('chartDonut'),{
+  type:'doughnut',
+  data:{
+    labels:['Onsite','Hybrid','Online Only'],
+    datasets:[{data:[33,6,1],backgroundColor:['rgba(96,165,250,0.85)','rgba(167,139,250,0.85)','rgba(52,211,153,0.85)'],borderWidth:0,hoverOffset:4}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} หัวข้อ`}}},cutout:'72%'}
+});
+
+// ============================================================
+//  MAIN TABLE
+// ============================================================
+(function(){
+  const tbody = document.getElementById('mainTableBody');
+  TOPICS.forEach((t,i)=>{
+    const utilColor2 = t.util_pct>=80?'#ef4444':t.util_pct>=60?'#f59e0b':t.util_pct>=40?'#10b981':'#60a5fa';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><span class="rank-num">${i+1}</span></td>
+      <td><div class="topic-name">${t.name}</div></td>
+      <td>${badgeHtml(t.format)}</td>
+      <td><span class="num-cell">${t.onsite_reg||'—'}</span></td>
+      <td><span class="num-cell">${t.online_reg||'—'}</span></td>
+      <td><span class="num-cell highlight">${t.total_reg}</span></td>
+      <td><span class="num-cell">${t.onsite_cap||'—'}</span></td>
+      <td>
+        ${t.onsite_cap>0?`
+        <div class="util-bar-wrap">
+          <div class="util-bar"><div class="util-bar-fill" style="width:${Math.min(t.util_pct,100)}%;background:${utilColor2}"></div></div>
+          <span class="util-text" style="color:${utilColor2}">${t.util_pct.toFixed(1)}%</span>
+        </div>`:'<span class="num-cell" style="color:var(--muted)">—</span>'}
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+})();
+
+// ============================================================
+//  UTIL LIST (full, onsite only, sorted by util)
+// ============================================================
+(function(){
+  const items = [...TOPICS].filter(t=>t.onsite_cap>0).sort((a,b)=>b.util_pct-a.util_pct);
+  const el = document.getElementById('utilList');
+  items.forEach((t,i)=>{
+    const c = utilColor(t.util_pct);
+    const div = document.createElement('div');
+    div.className='util-row';
+    div.innerHTML=`
+      <span class="util-rank">${i+1}</span>
+      <span class="util-name">${t.name}</span>
+      <span>${badgeHtml(t.format)}</span>
+      <div class="util-bar2"><div class="util-bar2-fill" style="width:${Math.min(t.util_pct,100)}%;background:${c}"></div></div>
+      <span class="util-pct" style="color:${c}">${t.util_pct.toFixed(1)}%</span>
+    `;
+    el.appendChild(div);
+  });
+})();
+
+// ============================================================
+//  INSIGHTS
+// ============================================================
+(function(){
+  const sorted = [...TOPICS].sort((a,b)=>b.total_reg-a.total_reg);
+  const top1 = sorted[0];
+  const fullHouse = TOPICS.filter(t=>t.util_pct>=100);
+  const nearFull = TOPICS.filter(t=>t.util_pct>=70&&t.util_pct<100);
+  const lowUtil = TOPICS.filter(t=>t.onsite_cap>0&&t.util_pct<15).sort((a,b)=>a.util_pct-b.util_pct);
+  // Hybrid: compare online vs onsite
+  const hybridTopics = TOPICS.filter(t=>t.format==='Hybrid'&&t.online_reg>0&&t.onsite_reg>0);
+  const onlineLeader = hybridTopics.filter(t=>t.online_reg>t.onsite_reg);
+
+  const insights = [
+    {
+      icon:'🏆',label:'อันดับ 1 ยอดนิยม',cls:'good',
+      value: truncate(top1.name,50),
+      sub:`รวม ${top1.total_reg} ที่นั่งสำรอง (Onsite ${top1.onsite_reg} + Online ${top1.online_reg})`
+    },
+    {
+      icon:'🔥',label:'Session เต็มที่นั่ง (100%)',cls:'warn',
+      value: fullHouse.length>0?fullHouse.map(t=>truncate(t.name,40)).join(', '):'ยังไม่มี',
+      sub:`${fullHouse.length} หัวข้อที่ Onsite เต็มแล้ว — พิจารณาเพิ่มรอบหรือขยายห้อง`
+    },
+    {
+      icon:'📈',label:'Hybrid: Online โดดเด่น',cls:'info',
+      value: onlineLeader.length>0?onlineLeader.map(t=>truncate(t.name,35)).join(' / '):'ไม่มี',
+      sub:`${onlineLeader.length} หัวข้อ Hybrid มีผู้ลงทะเบียน Online มากกว่า Onsite`
+    },
+    {
+      icon:'⚡',label:'ใกล้เต็ม (70-99%)',cls:'warn',
+      value:`${nearFull.length} หัวข้อ`,
+      sub: nearFull.slice(0,2).map(t=>truncate(t.name,35)+'('+t.util_pct.toFixed(0)+'%)').join(' / ')
+    },
+    {
+      icon:'📣',label:'Sessions ควรโปรโมตเพิ่ม',cls:'info',
+      value:`${lowUtil.length} หัวข้อ (Util <15%)`,
+      sub: lowUtil.slice(0,2).map(t=>truncate(t.name,33)+'('+t.util_pct.toFixed(0)+'%)').join(' / ')
+    },
+    {
+      icon:'📅',label:'วันลงทะเบียนสูงสุด',cls:'good',
+      value:'2 เมษายน 2569',
+      sub:'ผู้ลงทะเบียน 90 คนในวันเดียว — 1 วันก่อนงาน'
+    }
+  ];
+
+  const grid = document.getElementById('insightsGrid');
+  insights.forEach(ins=>{
+    const div=document.createElement('div');
+    div.className=`insight-card ${ins.cls}`;
+    div.innerHTML=`
+      <div class="insight-icon">${ins.icon}</div>
+      <div class="insight-label">${ins.label}</div>
+      <div class="insight-value">${ins.value}</div>
+      <div class="insight-sub">${ins.sub}</div>
+    `;
+    grid.appendChild(div);
+  });
+})();
+</script>
+</body>
+</html>
